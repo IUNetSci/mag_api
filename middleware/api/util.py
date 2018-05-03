@@ -27,7 +27,7 @@ def get_etw_config():
         raise Exception('Unable to find mag.config file. Make sure you have mag.config inside conf directory !')
 
 
-def get_etw_db_url():
+def get_msa_db_url():
     try:
         config = get_etw_config()
         db_host_name = config['DATABASE_INFO']['database-url']
@@ -38,7 +38,7 @@ def get_etw_db_url():
         raise Exception('Unable to find mag.config file !')
 
 
-def get_etw_db_name():
+def get_msa_db_name():
     try:
         config = get_etw_config()
         db_name = config['DATABASE_INFO']['database-name']
@@ -49,7 +49,7 @@ def get_etw_db_name():
         raise Exception('Unable to find mag.config file !')
 
 
-def get_etw_db_username():
+def get_msa_db_username():
     try:
         config = get_etw_config()
         db_username = config['DATABASE_INFO']['database-username']
@@ -60,7 +60,7 @@ def get_etw_db_username():
         raise Exception('Unable to find mag.config file !')
 
 
-def get_etw_db_pwd():
+def get_msa_db_pwd():
     try:
         config = get_etw_config()
         db_pwd = config['DATABASE_INFO']['database-password']

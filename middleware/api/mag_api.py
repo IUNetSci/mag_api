@@ -16,6 +16,9 @@ sys.path.append(parent)
 from flask import Flask, abort, request, jsonify, g, url_for, render_template, escape
 from flask_cors import CORS
 import json
+import middleware.api.util
+
+from neo4j.v1 import GraphDatabase
 
 def run_query(query):
     query_id = 12
@@ -30,9 +33,15 @@ app.config['SECRET_KEY'] = 'test key'
 
 logger = logging.getLogger(__name__)
 
+
+def check_paper(tx):
+    tx.run("CALL apoc.export.csv.query('MATCH (a:paper) WHERE a.paper_title CONTAINS toLower(\"A statistical study of heterogeneous nucleation of ice by molecular dynamics\") RETURN ID(a)','/shared/tuna/mag_results/test1.csv', {})")
+
+
 @app.route('/')
 def index():
     return render_template("index.html")
+
 
 @app.route('/search', methods=['POST'])
 def get_search():
@@ -42,6 +51,14 @@ def get_search():
     title = request.json.get('title')
 
     query_id = run_query("some query")
+    driver = GraphDatabase.driver(middleware.api.util.get_msa_db_url(), auth=(middleware.api.util.get_msa_db_username(), middleware.api.util.get_msa_db_pwd()))
+
+    with driver.session() as session:
+        query1 = session.write_transaction(check_paper)
+        print(query1)
+        return 200
+
+    return 501
     return jsonify({'query_id': query_id}), 202
 
 @app.route('/results/<query_id>', methods=['GET'])
