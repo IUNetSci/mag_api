@@ -57,8 +57,7 @@ def run_query_get_id(query, params):
     q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/{filename}.csv', {})"
 
     db = get_db()
-    with db.session() as session:
-        result = session.run(q, params, filename=filename)
+    db.run(q, params, filename=filename)
     return query_id
 
 
