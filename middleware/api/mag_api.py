@@ -29,3 +29,27 @@ logger = logging.getLogger(__name__)
 @app.route('/')
 def index():
     return render_template("index.html")
+
+@app.route('/search')
+def get_search():
+    return 501
+
+@app.route('/results/<query_id>')
+def get_results(query_id):
+    return 501
+
+@app.route('/references/<paper_id>')
+def get_references(paper_id):
+    return 501
+
+@app.route('/citations/<paper_id>')
+def get_citations(paper_id):
+    return 501
+
+@app.route('/paper/<paper_id>')
+def get_paper(paper_id):
+    return 501
+
+@app.route('/papers')
+def get_multiple_papers():
+    return 501
