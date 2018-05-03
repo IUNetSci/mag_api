@@ -71,7 +71,7 @@ def index():
 def get_search():
     logger.info('Trying /search endpoint...')
     return_type = request.json.get('return_type')
-    years = request.json.get('years')
+    year = request.json.get('year')
     title = request.json.get('title')
 
     query = ""
@@ -80,7 +80,7 @@ def get_search():
     query += "AND normalized_title CONTAINS toLower('{title}')"
     query += "RETURN ID(a)"
 
-    query_id = run_query(query, {'year': year, "title": title})
+    query_id = run_query_get_id(query, {'year': year, "title": title})
 
     return jsonify({'query_id': query_id}), 202
 
