@@ -80,7 +80,7 @@ def get_search():
     query += "AND a.normalized_title CONTAINS toLower({title}) "
     query += "RETURN ID(a) "
 
-    query_id = run_query_get_id(query, {'year': year, "title": title})
+    query_id = run_query_get_id(query, {year: year, title: title})
 
     return jsonify({'query_id': query_id}), 202
 
