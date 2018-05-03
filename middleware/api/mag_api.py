@@ -18,7 +18,7 @@ from flask import Flask, abort, request, jsonify, g, url_for, render_template, e
 from flask_cors import CORS
 import json
 import middleware.api.util
-import asyncio
+# import asyncio
 
 from neo4j.v1 import GraphDatabase
 
@@ -48,31 +48,18 @@ def close_db(error):
     if hasattr(g, 'neo4j_db'):
         g.neo4j_db.close()
 
-async def async_run(query):
-    db = get_db()
-    def run():
-        with db.session() as session:
-            result = session.run(query, *args, **kwargs)
-        return result
-    loop = asyncio.get_event_loop()
-    # Passing None uses the default executor
-    return await loop.run_in_executor(None, run)
-
-def run_query_get_id(query):
-
+def run_query_get_id(query, params):
     query_id = uuid.uuid4().hex
     filename = uuid.uuid4().hex
-
-    logger.info(query_id + " -- " + filename)
+    logger.info("query_id: " + query_id + ", filename: " + filename)
 
     query_id_filepaths.update(query_id, filename)
+    q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/{filename}.csv', {})"
 
-    q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/"+filename+".csv', {})"
-    async_run(q)
-
+    db = get_db()
+    with db.session() as session:
+        result = session.run(q, params, filename=filename)
     return query_id
-
-
 
 
 @app.route('/')
@@ -87,7 +74,14 @@ def get_search():
     years = request.json.get('years')
     title = request.json.get('title')
 
-    query_id = run_query_get_id("MATCH (a:paper) WHERE a.paper_title CONTAINS toLower(\"A statistical study of heterogeneous nucleation of ice by molecular dynamics\") RETURN ID(a)")
+    query = ""
+    query += "MATCH (a:paper)"
+    query += "WHERE a.paper_year = '{year}'"
+    query += "AND normalized_title CONTAINS toLower('{title}')"
+    query += "RETURN ID(a)"
+
+    query_id = run_query(query, {'year': year, "title": title})
+
     return jsonify({'query_id': query_id}), 202
 
 @app.route('/results/<query_id>', methods=['GET'])
