@@ -18,6 +18,7 @@ from flask import Flask, abort, request, jsonify, g, url_for, render_template, e
 from flask_cors import CORS
 import json
 import middleware.api.util
+import asyncio
 
 from neo4j.v1 import GraphDatabase
 
@@ -47,6 +48,15 @@ def close_db(error):
     if hasattr(g, 'neo4j_db'):
         g.neo4j_db.close()
 
+async def async_run(query):
+    db = get_db()
+    def run():
+        with db.session() as session:
+            result = session.run(query, *args, **kwargs)
+        return result
+    loop = asyncio.get_event_loop()
+    # Passing None uses the default executor
+    return await loop.run_in_executor(None, run)
 
 def run_query_get_id(query):
 
@@ -57,9 +67,8 @@ def run_query_get_id(query):
 
     query_id_filepaths.update(query_id, filename)
 
-    db = get_db()
     q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/"+filename+".csv', {})"
-    db.run(q)
+    async_run(q)
 
     return query_id
 
