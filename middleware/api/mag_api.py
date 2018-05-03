@@ -7,6 +7,7 @@ from datetime import datetime
 from subprocess import Popen, PIPE
 import configparser
 from random import randint
+import uuid
 
 abspath = os.path.abspath(os.path.dirname(__file__))
 middleware = os.path.dirname(abspath)
@@ -20,9 +21,6 @@ import middleware.api.util
 
 from neo4j.v1 import GraphDatabase
 
-def run_query(query):
-    query_id = 12
-    return query_id
 
 # initialization
 app = Flask(__name__,
@@ -33,9 +31,39 @@ app.config['SECRET_KEY'] = 'test key'
 
 logger = logging.getLogger(__name__)
 
+query_id_filepaths = {
+    #query_id : filename
+}
 
-def check_paper(tx):
-    tx.run("CALL apoc.export.csv.query('MATCH (a:paper) WHERE a.paper_title CONTAINS toLower(\"A statistical study of heterogeneous nucleation of ice by molecular dynamics\") RETURN ID(a)','/shared/tuna/mag_results/test1.csv', {})")
+driver = GraphDatabase.driver(middleware.api.util.get_msa_db_url(), auth=(middleware.api.util.get_msa_db_username(), middleware.api.util.get_msa_db_pwd()))
+
+def get_db():
+    if not hasattr(g, 'neo4j_db'):
+        g.neo4j_db = driver.session()
+    return g.neo4j_db
+
+@app.teardown_appcontext
+def close_db(error):
+    if hasattr(g, 'neo4j_db'):
+g.neo4j_db.close()
+
+
+def run_query_get_id(query):
+
+    query_id = uuid.uuid4().hex
+    filename = uuid.uuid4().hex
+
+    logger.info(query_id + " -- " + filename)
+
+    query_id_filepaths.update(query_id, filename)
+
+    db = get_db()
+    q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/"+filename+".csv', {})"
+    db.run(q)
+
+    return query_id
+
+
 
 
 @app.route('/')
@@ -50,15 +78,7 @@ def get_search():
     years = request.json.get('years')
     title = request.json.get('title')
 
-    query_id = run_query("some query")
-    driver = GraphDatabase.driver(middleware.api.util.get_msa_db_url(), auth=(middleware.api.util.get_msa_db_username(), middleware.api.util.get_msa_db_pwd()))
-
-    with driver.session() as session:
-        query1 = session.write_transaction(check_paper)
-        print(query1)
-        return 200
-
-    return 501
+    query_id = run_query_get_id("MATCH (a:paper) WHERE a.paper_title CONTAINS toLower(\"A statistical study of heterogeneous nucleation of ice by molecular dynamics\") RETURN ID(a)")
     return jsonify({'query_id': query_id}), 202
 
 @app.route('/results/<query_id>', methods=['GET'])
