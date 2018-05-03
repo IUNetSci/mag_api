@@ -54,8 +54,8 @@ def run_query_get_id(query, params):
     logger.info("query_id: " + query_id + ", filename: " + filename)
 
     query_id_filepaths[query_id] = filename
-    params["filename"] = filename
-    q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/{filename}.csv', {})"
+    # params["filename"] = filename
+    q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/"+filename+".csv', {})"
 
     db = get_db()
     db.run(q, params)
@@ -75,10 +75,10 @@ def get_search():
     title = request.json.get('title')
 
     query = ""
-    query += "MATCH (a:paper)"
-    query += "WHERE a.paper_year = '{year}'"
-    query += "AND normalized_title CONTAINS toLower('{title}')"
-    query += "RETURN ID(a)"
+    query += "MATCH (a:paper) "
+    query += "WHERE a.paper_year = {year} "
+    query += "AND normalized_title CONTAINS toLower({title}) "
+    query += "RETURN ID(a) "
 
     query_id = run_query_get_id(query, {'year': year, "title": title})
 
