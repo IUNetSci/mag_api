@@ -54,10 +54,11 @@ def run_query_get_id(query, params):
     logger.info("query_id: " + query_id + ", filename: " + filename)
 
     query_id_filepaths[query_id] = filename
+    params["filename"] = filename
     q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/{filename}.csv', {})"
 
     db = get_db()
-    db.run(q, params, filename=filename)
+    db.run(q, params)
     return query_id
 
 
