@@ -77,7 +77,7 @@ def get_search():
     query = ""
     query += "MATCH (a:paper) "
     query += "WHERE a.paper_year = {year} "
-    query += "AND normalized_title CONTAINS toLower({title}) "
+    query += "AND a.normalized_title CONTAINS toLower({title}) "
     query += "RETURN ID(a) "
 
     query_id = run_query_get_id(query, {'year': year, "title": title})
