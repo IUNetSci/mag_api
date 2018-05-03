@@ -53,7 +53,7 @@ def run_query_get_id(query, params):
     filename = uuid.uuid4().hex
     logger.info("query_id: " + query_id + ", filename: " + filename)
 
-    query_id_filepaths.update(query_id, filename)
+    query_id_filepaths[query_id] = filename
     q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/{filename}.csv', {})"
 
     db = get_db()
