@@ -45,7 +45,7 @@ def get_db():
 @app.teardown_appcontext
 def close_db(error):
     if hasattr(g, 'neo4j_db'):
-g.neo4j_db.close()
+        g.neo4j_db.close()
 
 
 def run_query_get_id(query):
