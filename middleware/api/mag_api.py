@@ -8,6 +8,7 @@ from subprocess import Popen, PIPE
 import configparser
 from random import randint
 import uuid
+import csv
 
 abspath = os.path.abspath(os.path.dirname(__file__))
 middleware = os.path.dirname(abspath)
@@ -21,6 +22,12 @@ import middleware.api.util
 # import asyncio
 
 from neo4j.v1 import GraphDatabase
+
+print()
+print("initialized")
+print(datetime.now())
+print()
+
 
 
 # initialization
@@ -48,24 +55,25 @@ def close_db(error):
     if hasattr(g, 'neo4j_db'):
         g.neo4j_db.close()
 
-def run_query_get_id(query):
+def run_query_get_id(query, params):
     query_id = uuid.uuid4().hex
     filename = uuid.uuid4().hex
-    logger.info("query_id: " + query_id + ", filename: " + filename)
-
+    logger.info("\nquery_id: " + query_id + ", filename: " + filename + "\n")
+    print("run query - " + query_id)
     query_id_filepaths[query_id] = filename
+    print(query_id_filepaths[query_id])
     # params["filename"] = filename
-    q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/"+filename+".csv', {})"
-
+    q = 'CALL apoc.export.csv.query("'+query+'","/shared/tuna/mag_results/'+filename+'.csv", {})'
+    print(q)
     db = get_db()
-    result = db.run(query)
+    db.run(q)
+    #print(result)
+    print("done")
     return query_id
-
 
 @app.route('/')
 def index():
     return render_template("index.html")
-
 
 @app.route('/search', methods=['POST'])
 def get_search():
@@ -74,27 +82,49 @@ def get_search():
     year = str(request.json.get('year'))
     title = request.json.get('title')
 
+    print(title)
     title = title.replace("'", "\\'").replace('"', '\\"')
-    year = year.replace("'", "\\'").replace('"', '\\"')
 
     query = ""
     query += "MATCH (a:paper) "
-    query += "WHERE a.paper_year = {year} "
-    query += "AND a.normalized_title CONTAINS toLower({title}) "
+    query += "WHERE "
+#    query += " a.paper_year = {year} "
+#    query += "AND "
+    query += " a.paper_title CONTAINS toLower('{title}') "
     query += "RETURN ID(a) "
-    query = query.format(year=year, title=title)
 
-    query_id = run_query_get_id(query)
+    query = query.format(year=str(year), title=title)
+    print(query)
+    query_id = run_query_get_id(query, {'year': str(year), 'title': title})
 
     return jsonify({'query_id': query_id}), 202
+
 
 @app.route('/results/<query_id>', methods=['GET'])
 def get_results(query_id):
     logger.info('Trying /results/' + query_id + ' endpoint...')
 
     #check filesystem for query_ids[query_id].json
+    filename = query_id_filepaths[query_id]
+    filepath = '/shared/tuna/mag_results/'+filename+'.csv'
 
-    return 501
+
+    # Open the CSV
+    f = open( filepath, 'rU' )
+    # Change each fieldname to the appropriate field name. I know, so difficult.
+    reader = csv.DictReader(f)
+    # Parse the CSV into JSON
+    out = json.dumps( [ row for row in reader ] )
+    print("Parsed JSON")
+    print(out)
+
+    return out, 202
+    # Save the JSON
+    # f = open( '/path/to/parsed.json', 'w')
+    # f.write(out)
+    # print "JSON saved!"
+
+    # return 501
 
 @app.route('/references/<paper_id>', methods=['GET'])
 def get_references(paper_id):
