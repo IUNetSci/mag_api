@@ -55,10 +55,10 @@ def run_query_get_id(query, params):
 
     query_id_filepaths[query_id] = filename
     # params["filename"] = filename
-    q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/"+filename+".csv', {})"
+    # q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/"+filename+".csv', {})"
 
     db = get_db()
-    db.run(q, params)
+    db.run(query, params)
     return query_id
 
 
@@ -80,7 +80,7 @@ def get_search():
     query += "AND a.normalized_title CONTAINS toLower({title}) "
     query += "RETURN ID(a) "
 
-    query_id = run_query_get_id(query, {year: year, title: title})
+    query_id = run_query_get_id(query, {'year': str(year), 'title': title})
 
     return jsonify({'query_id': query_id}), 202
 
