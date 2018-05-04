@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 query_id_filepaths = {
     #query_id : filename
+    "fc16b50f294f407297486f189f0eb7ac":"cd1b5ce10ebb4cbba192041b8a47373b"
 }
 
 driver = GraphDatabase.driver(middleware.api.util.get_msa_db_url(), auth=(middleware.api.util.get_msa_db_username(), middleware.api.util.get_msa_db_pwd()))
@@ -88,10 +89,10 @@ def get_search():
     query = ""
     query += "MATCH (a:paper) "
     query += "WHERE "
-#    query += " a.paper_year = {year} "
-#    query += "AND "
+    query += " a.paper_year = {year} "
+    query += " AND "
     query += " a.paper_title CONTAINS toLower('{title}') "
-    query += "RETURN ID(a) "
+    query += "RETURN ID(a) AS paper_id"
 
     query = query.format(year=str(year), title=title)
     print(query)
