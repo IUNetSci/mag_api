@@ -48,17 +48,17 @@ def close_db(error):
     if hasattr(g, 'neo4j_db'):
         g.neo4j_db.close()
 
-def run_query_get_id(query, params):
+def run_query_get_id(query):
     query_id = uuid.uuid4().hex
     filename = uuid.uuid4().hex
     logger.info("query_id: " + query_id + ", filename: " + filename)
 
     query_id_filepaths[query_id] = filename
     # params["filename"] = filename
-    # q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/"+filename+".csv', {})"
+    q = "CALL apoc.export.csv.query('"+query+"','/shared/tuna/mag_results/"+filename+".csv', {})"
 
     db = get_db()
-    db.run(query, params)
+    result = db.run(query)
     return query_id
 
 
@@ -71,16 +71,20 @@ def index():
 def get_search():
     logger.info('Trying /search endpoint...')
     return_type = request.json.get('return_type')
-    year = request.json.get('year')
+    year = str(request.json.get('year'))
     title = request.json.get('title')
+
+    title = title.replace("'", "\\'").replace('"', '\\"')
+    year = year.replace("'", "\\'").replace('"', '\\"')
 
     query = ""
     query += "MATCH (a:paper) "
     query += "WHERE a.paper_year = {year} "
     query += "AND a.normalized_title CONTAINS toLower({title}) "
     query += "RETURN ID(a) "
+    query = query.format(year=year, title=title)
 
-    query_id = run_query_get_id(query, {'year': str(year), 'title': title})
+    query_id = run_query_get_id(query)
 
     return jsonify({'query_id': query_id}), 202
 
